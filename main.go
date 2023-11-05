@@ -11,6 +11,26 @@ import (
 	"strings"
 )
 
+func readFormFile(mr *multipart.Reader) []byte {
+    var content []byte
+    for {
+        p, err := mr.NextPart()
+
+        if (err != nil) {
+            break
+        }
+
+        slurp, err := io.ReadAll(p)
+        if (err != nil) {
+            log.Fatal(err)
+        }
+
+        content = append(content, slurp[:]...)
+    }
+
+    return content
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
     if (r.Method != http.MethodPost) {
         http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -28,24 +48,10 @@ func index(w http.ResponseWriter, r *http.Request) {
     }
 
     mr := multipart.NewReader(r.Body, params["boundary"])
-    var content []byte
-    for {
-        p, err := mr.NextPart()
+    data := readFormFile(mr)
 
-        if (err != nil) {
-            break
-        }
-
-        slurp, err := io.ReadAll(p)
-        if (err != nil) {
-            log.Fatal(err)
-        }
-
-        content = append(content, slurp[:]...)
-    }
-
-    str := bytes.NewBuffer(content).String()
-    fmt.Printf("content: %s\n", str);
+    str := bytes.NewBuffer(data).String()
+    fmt.Printf("%s\n", str);
 }
 
 func main() {
