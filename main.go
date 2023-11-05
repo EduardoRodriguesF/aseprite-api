@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -50,8 +49,14 @@ func index(w http.ResponseWriter, r *http.Request) {
     mr := multipart.NewReader(r.Body, params["boundary"])
     data := readFormFile(mr)
 
-    str := bytes.NewBuffer(data).String()
-    fmt.Printf("%s\n", str);
+    file, err := os.CreateTemp("uploads", "aseprite_")
+    if (err != nil) {
+        log.Fatal(err)
+    }
+
+    defer file.Close()
+
+    file.Write(data)
 }
 
 func main() {
