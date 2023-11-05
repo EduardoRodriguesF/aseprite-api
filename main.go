@@ -16,6 +16,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type asepriteOptions struct {
+	outputFile string
+}
+
+func AsepriteSheet(file *os.File, options asepriteOptions) ([]byte, error) {
+	var args []string
+
+	args = append(args, []string{"-b", file.Name(), "--sheet", options.outputFile}...)
+	cmd := exec.Command(os.Getenv("ASEPRITE"), args...)
+
+	return cmd.Output()
+}
+
 func readFormFile(mr *multipart.Reader) []byte {
 	var content []byte
 
@@ -62,21 +75,21 @@ func export(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileName := filepath.Base(file.Name())
+	outputFile := fmt.Sprintf("out/%s.png", fileName)
 
 	defer file.Close()
 
 	file.Write(data)
 
-	destFile := fmt.Sprintf("out/%s.png", fileName)
-
-	cmd := exec.Command(os.Getenv("ASEPRITE"), "-b", file.Name(), "--sheet", destFile)
-	res, err := cmd.Output()
+	res, err := AsepriteSheet(file, asepriteOptions{
+		outputFile: outputFile,
+	})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	f, err := os.ReadFile(destFile)
+	f, err := os.ReadFile(outputFile)
 
 	if err != nil {
 		http.Error(w, bytes.NewBuffer(res).String(), http.StatusInternalServerError)
