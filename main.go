@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -54,9 +58,29 @@ func export(w http.ResponseWriter, r *http.Request) {
         log.Fatal(err)
     }
 
+    fileName := filepath.Base(file.Name())
+
     defer file.Close()
 
     file.Write(data)
+
+    destFile := fmt.Sprintf("out/%s.png", fileName)
+
+    cmd := exec.Command(os.Getenv("ASEPRITE"), "-b", file.Name(), "--sheet", destFile)
+    res, err := cmd.Output()
+
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
+
+    f, err := os.ReadFile(destFile)
+
+    if err != nil {
+        http.Error(w, bytes.NewBuffer(res).String(), http.StatusInternalServerError)
+    }
+
+    w.Header().Set("Content-type", "application/octet-stream")
+    w.Write(f)
 }
 
 func main() {

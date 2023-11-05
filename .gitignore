@@ -1,3 +1,5 @@
 temp
+.env
 uploads/*
 *.pem
+out/*
