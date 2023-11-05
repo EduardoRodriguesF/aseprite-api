@@ -15,82 +15,83 @@ import (
 )
 
 func readFormFile(mr *multipart.Reader) []byte {
-    var content []byte
-    for {
-        p, err := mr.NextPart()
+	var content []byte
 
-        if (err != nil) {
-            break
-        }
+	for {
+		p, err := mr.NextPart()
 
-        slurp, err := io.ReadAll(p)
-        if (err != nil) {
-            log.Fatal(err)
-        }
+		if err != nil {
+			break
+		}
 
-        content = append(content, slurp...)
-    }
+		slurp, err := io.ReadAll(p)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-    return content
+		content = append(content, slurp...)
+	}
+
+	return content
 }
 
 func export(w http.ResponseWriter, r *http.Request) {
-    if (r.Method != http.MethodPost) {
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-    }
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 
-    contentType := r.Header.Get("Content-type")
-    mediaType, params, err := mime.ParseMediaType(contentType)
+	contentType := r.Header.Get("Content-type")
+	mediaType, params, err := mime.ParseMediaType(contentType)
 
-    if (err != nil) {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    if (!strings.HasPrefix(mediaType, "multipart/")) {
-        log.Fatal("Unsupported content-type")
-    }
+	if !strings.HasPrefix(mediaType, "multipart/") {
+		log.Fatal("Unsupported content-type")
+	}
 
-    mr := multipart.NewReader(r.Body, params["boundary"])
-    data := readFormFile(mr)
+	mr := multipart.NewReader(r.Body, params["boundary"])
+	data := readFormFile(mr)
 
-    file, err := os.CreateTemp("uploads", "aseprite_")
-    if (err != nil) {
-        log.Fatal(err)
-    }
+	file, err := os.CreateTemp("uploads", "aseprite_")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fileName := filepath.Base(file.Name())
+	fileName := filepath.Base(file.Name())
 
-    defer file.Close()
+	defer file.Close()
 
-    file.Write(data)
+	file.Write(data)
 
-    destFile := fmt.Sprintf("out/%s.png", fileName)
+	destFile := fmt.Sprintf("out/%s.png", fileName)
 
-    cmd := exec.Command(os.Getenv("ASEPRITE"), "-b", file.Name(), "--sheet", destFile)
-    res, err := cmd.Output()
+	cmd := exec.Command(os.Getenv("ASEPRITE"), "-b", file.Name(), "--sheet", destFile)
+	res, err := cmd.Output()
 
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
-    f, err := os.ReadFile(destFile)
+	f, err := os.ReadFile(destFile)
 
-    if err != nil {
-        http.Error(w, bytes.NewBuffer(res).String(), http.StatusInternalServerError)
-    }
+	if err != nil {
+		http.Error(w, bytes.NewBuffer(res).String(), http.StatusInternalServerError)
+	}
 
-    w.Header().Set("Content-type", "application/octet-stream")
-    w.Write(f)
+	w.Header().Set("Content-type", "application/octet-stream")
+	w.Write(f)
 }
 
 func main() {
-    mux := http.NewServeMux()
+	mux := http.NewServeMux()
 
-    mux.HandleFunc("/export", export)
+	mux.HandleFunc("/export", export)
 
-    err := http.ListenAndServe(":80", mux)
-    
-    if (err != nil) {
-        log.Fatal(err)
-    }
+	err := http.ListenAndServe(":80", mux)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
