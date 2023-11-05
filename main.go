@@ -30,7 +30,7 @@ func readFormFile(mr *multipart.Reader) []byte {
     return content
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
+func export(w http.ResponseWriter, r *http.Request) {
     if (r.Method != http.MethodPost) {
         http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
     }
@@ -62,7 +62,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 func main() {
     mux := http.NewServeMux()
 
-    mux.HandleFunc("/", index)
+    mux.HandleFunc("/export", export)
 
     err := http.ListenAndServe(":80", mux)
     
