@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 func readFormFile(mr *multipart.Reader) []byte {
@@ -85,13 +87,20 @@ func export(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if os.Getenv("ASEPRITE") == "" {
+		log.Fatal("missing ASEPRITE environment variable")
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/export", export)
 
-	err := http.ListenAndServe(":80", mux)
-
-	if err != nil {
+	if err := http.ListenAndServe(":80", mux); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -14,8 +14,16 @@ curl -F upload=@path/to/file.aseprite localhost:80/export -o file.png
 
 ## Running locally
 
-Assuming you already have Go's development tools, run the main.go file providing the path to an Aseprite CLI.
+1. Create a `.env` file and set a variable `ASEPRITE` pointing to the [Aseprite CLI](https://www.aseprite.org/docs/cli/#platform-specific-details) path.
+2. Assuming you already have Go's development tools, run the main.go file.
 
 ```sh
-ASEPRITE=path/to/aseprite go run main.go
+go run main.go
+```
+
+Alternativelly, you can build it and execute the binary.
+
+```sh
+go build
+./aseprite-api
 ```
