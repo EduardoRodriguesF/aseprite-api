@@ -24,7 +24,7 @@ func readFormFile(mr *multipart.Reader) []byte {
             log.Fatal(err)
         }
 
-        content = append(content, slurp[:]...)
+        content = append(content, slurp...)
     }
 
     return content
