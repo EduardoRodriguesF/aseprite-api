@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	aseprite "github.com/EduardoRodriguesF/aseprite-api/pkg"
 	"github.com/joho/godotenv"
 )
 
@@ -36,7 +37,7 @@ func readFormFile(mr *multipart.Reader) []byte {
 	return content
 }
 
-func export(aseprite *Aseprite) func(w http.ResponseWriter, r *http.Request) {
+func export(ase *aseprite.Aseprite) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -68,11 +69,11 @@ func export(aseprite *Aseprite) func(w http.ResponseWriter, r *http.Request) {
 
 		file.Write(data)
 
-		exporter := aseprite.Export(file, ExportOptions{
+		exporter := ase.Export(file, aseprite.ExportOptions{
 			OutputFile: outputFile,
 		})
 
-        res, err := exporter.Sheet()
+		res, err := exporter.Sheet()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -100,7 +101,7 @@ func main() {
 		log.Fatal("missing ASEPRITE environment variable")
 	}
 
-	aseprite := NewAseprite(bin)
+	aseprite := aseprite.NewAseprite(bin)
 
 	mux := http.NewServeMux()
 
